@@ -83,6 +83,188 @@
       return Math.ceil(((parseInt(h) || 0) + (parseInt(m) || 0) / 60) * rate);
     }
 
+    // ── STYLES (App से बाहर ताकि कीबोर्ड फोकस न खोए) ──
+    const inp = {
+      background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
+      borderRadius: 12, color: "#fff", fontFamily: "inherit", colorScheme: "dark",
+      boxSizing: "border-box", width: "100%",
+    };
+    const lbl = { color: "#94a3b8", fontSize: 12, marginBottom: 5 };
+    const pill = (on) => ({
+      padding: "6px 16px", borderRadius: 20, border: "none", cursor: "pointer",
+      fontFamily: "inherit", fontSize: 13, fontWeight: 600,
+      background: on ? "#38bdf8" : "rgba(255,255,255,0.08)",
+      color: on ? "#0d1b2a" : "#94a3b8",
+    });
+
+    // ── ADD MODAL COMPONENT (App से बाहर निकाला गया) ──
+    const AddModal = ({ form, fc, people, setForm, pvValid, pvAmt, emptyForm, selName, setShowAdd, saveEntry }) => (
+      <div style={{
+        position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)",
+        backdropFilter: "blur(8px)", zIndex: 50,
+        display: "flex", alignItems: "flex-end", justifyContent: "center",
+      }}>
+        <div style={{
+          background: "#162030", borderRadius: "22px 22px 0 0",
+          padding: "24px 18px 50px", width: "100%", maxWidth: 500,
+          maxHeight: "92vh", overflowY: "auto",
+          border: "1px solid rgba(255,255,255,0.1)",
+        }}>
+          <div style={{ color: "#fff", fontWeight: 800, fontSize: 18, marginBottom: 20 }}>
+            💧 नया Record
+          </div>
+
+          <div style={{ marginBottom: 14 }}>
+            <div style={lbl}>किसान का नाम *</div>
+            <input name="name" value={form.name} onChange={fc}
+              list="nl" placeholder="नाम लिखें या चुनें…"
+              style={{ ...inp, padding: "12px 14px", fontSize: 15 }} />
+            <datalist id="nl">
+              {people.map((p) => <option key={p.name} value={p.name} />)}
+            </datalist>
+          </div>
+
+          <div style={{ marginBottom: 18 }}>
+            <div style={lbl}>तारीख *</div>
+            <input name="date" type="date" value={form.date} onChange={fc}
+              style={{ ...inp, padding: "12px 14px", fontSize: 15 }} />
+          </div>
+
+          <div style={{
+            background: "rgba(255,255,255,0.04)", borderRadius: 16,
+            border: "1px solid rgba(255,255,255,0.1)", padding: "16px 14px", marginBottom: 14,
+          }}>
+            <div style={{ color: "#7dd3fc", fontWeight: 700, fontSize: 14, marginBottom: 14 }}>
+              ⏱ पंप कितना चला?
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ ...lbl, marginBottom: 8 }}>घंटे (Hours)</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {[1, 2, 3, 4, 5, 6, 8, 10, 12].map((h) => (
+                  <button key={h} type="button" onClick={() => setForm((f) => ({ ...f, hrs: String(h) }))}
+                    style={{
+                      width: 52, height: 44, borderRadius: 10, border: "none",
+                      cursor: "pointer", fontFamily: "inherit", fontSize: 16, fontWeight: 700,
+                      background: String(form.hrs) === String(h)
+                        ? "linear-gradient(135deg,#38bdf8,#0ea5e9)"
+                        : "rgba(255,255,255,0.08)",
+                      color: String(form.hrs) === String(h) ? "#fff" : "#94a3b8",
+                    }}>{h}</button>
+                ))}
+                <input
+                  name="hrs" type="number" min="0" max="23"
+                  value={form.hrs} onChange={fc}
+                  placeholder="अन्य"
+                  style={{
+                    ...inp, width: 70, height: 44, padding: "0 10px",
+                    fontSize: 15, textAlign: "center",
+                  }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <div style={{ ...lbl, marginBottom: 8 }}>मिनट (Minutes)</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {[0, 15, 30, 45].map((m) => (
+                  <button key={m} type="button" onClick={() => setForm((f) => ({ ...f, mins: String(m) }))}
+                    style={{
+                      flex: 1, height: 46, borderRadius: 10, border: "none",
+                      cursor: "pointer", fontFamily: "inherit", fontSize: 15, fontWeight: 700,
+                      background: String(form.mins) === String(m)
+                        ? "linear-gradient(135deg,#38bdf8,#0ea5e9)"
+                        : "rgba(255,255,255,0.08)",
+                      color: String(form.mins) === String(m) ? "#fff" : "#94a3b8",
+                    }}>{m}</button>
+                ))}
+              </div>
+            </div>
+
+            {pvValid && (
+              <div style={{
+                marginTop: 14, display: "flex", justifyContent: "space-between", alignItems: "center",
+                background: "rgba(56,189,248,0.1)", borderRadius: 12, padding: "12px 14px",
+                border: "1px solid rgba(56,189,248,0.2)",
+              }}>
+                <div>
+                  <div style={{ color: "#7dd3fc", fontSize: 11 }}>कुल समय</div>
+                  <div style={{ color: "#fff", fontWeight: 700, fontSize: 17 }}>
+                    {fmtDuration(form.hrs, form.mins)}
+                  </div>
+                </div>
+                <div style={{ textAlign: "right", marginLeft: "auto" }}>
+                  <div style={{ color: "#7dd3fc", fontSize: 11 }}>रकम</div>
+                  <div style={{ color: "#38bdf8", fontWeight: 900, fontSize: 26 }}>
+                    ₹{pvAmt.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div style={{ marginBottom: 14 }}>
+            <div style={lbl}>Rate (₹/ghanta)</div>
+            <input name="rate" type="number" value={form.rate} onChange={fc}
+              style={{ ...inp, padding: "12px 14px", fontSize: 15 }} />
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <div style={lbl}>Note (optional)</div>
+            <input name="note" type="text" value={form.note} onChange={fc}
+              placeholder="कुछ लिखना हो तो…"
+              style={{ ...inp, padding: "12px 14px", fontSize: 15 }} />
+          </div>
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <button type="button"
+              onClick={() => { setShowAdd(false); setForm({ ...emptyForm, name: selName || "" }); }}
+              style={{
+                flex: 1, padding: 14, borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)",
+                background: "transparent", color: "#94a3b8", fontFamily: "inherit", fontSize: 14, cursor: "pointer",
+              }}>रद्द</button>
+            <button type="button" onClick={saveEntry} style={{
+              flex: 2, padding: 14, borderRadius: 12, border: "none",
+              background: pvValid && form.name.trim()
+                ? "linear-gradient(135deg,#38bdf8,#0ea5e9)"
+                : "rgba(255,255,255,0.1)",
+              color: pvValid && form.name.trim() ? "#fff" : "#64748b",
+              fontFamily: "inherit", fontSize: 15, fontWeight: 700, cursor: "pointer",
+            }}>✅ Save करें</button>
+          </div>
+        </div>
+      </div>
+    );
+
+    // ── DELETE MODAL COMPONENT (App से बाहर निकाला गया) ──
+    const DelModal = ({ setDeleteId, delEntry, deleteId }) => (
+      <div style={{
+        position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)",
+        backdropFilter: "blur(8px)", zIndex: 50,
+        display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+      }}>
+        <div style={{
+          background: "#162030", borderRadius: 20, padding: 24,
+          border: "1px solid rgba(239,68,68,0.3)", maxWidth: 300, width: "100%", textAlign: "center",
+        }}>
+          <div style={{ fontSize: 38 }}>🗑️</div>
+          <div style={{ color: "#fff", fontWeight: 700, fontSize: 16, marginTop: 10 }}>Record हटाएं?</div>
+          <div style={{ color: "#94a3b8", fontSize: 13, marginTop: 5 }}>यह हमेशा के लिए हट जाएगा।</div>
+          <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
+            <button type="button" onClick={() => setDeleteId(null)} style={{
+              flex: 1, padding: 12, borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)",
+              background: "transparent", color: "#94a3b8", fontFamily: "inherit", cursor: "pointer",
+            }}>रहने दो</button>
+            <button type="button" onClick={() => delEntry(deleteId)} style={{
+              flex: 1, padding: 12, borderRadius: 10, border: "none",
+              background: "#ef4444", color: "#fff", fontFamily: "inherit", fontWeight: 700, cursor: "pointer",
+            }}>हाँ, हटाओ</button>
+          </div>
+        </div>
+      </div>
+    );
+
+    // ── MAIN APP FUNCTION ──
     function App() {
       const [entries, setEntries] = useState(() => {
         const saved = localStorage.getItem("pump_entries");
@@ -134,7 +316,6 @@
         const total = pe.reduce((s, e) => s + e.amount, 0);
         const paid = pe.filter((e) => e.paid).reduce((s, e) => s + e.amount, 0);
         
-        // कुल घंटे और मिनट का जोड़
         let totalMins = pe.reduce((s, e) => s + (parseInt(e.hrs) || 0) * 60 + (parseInt(e.mins) || 0), 0);
         const totalHrsText = `${Math.floor(totalMins / 60)}h ${totalMins % 60}m`;
 
@@ -186,188 +367,9 @@
         window.open(`https://api.whatsapp.com/send?text=${encodedMessage}`, '_blank');
       }
 
-      // 🖨️ प्रिंट कमांड ट्रिगर करने का फंक्शन
       function triggerPrint() {
         window.print();
       }
-
-      const inp = {
-        background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
-        borderRadius: 12, color: "#fff", fontFamily: "inherit", colorScheme: "dark",
-        boxSizing: "border-box", width: "100%",
-      };
-      const lbl = { color: "#94a3b8", fontSize: 12, marginBottom: 5 };
-      const pill = (on) => ({
-        padding: "6px 16px", borderRadius: 20, border: "none", cursor: "pointer",
-        fontFamily: "inherit", fontSize: 13, fontWeight: 600,
-        background: on ? "#38bdf8" : "rgba(255,255,255,0.08)",
-        color: on ? "#0d1b2a" : "#94a3b8",
-      });
-
-      const AddModal = () => (
-        <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)",
-          backdropFilter: "blur(8px)", zIndex: 50,
-          display: "flex", alignItems: "flex-end", justifyContent: "center",
-        }}>
-          <div style={{
-            background: "#162030", borderRadius: "22px 22px 0 0",
-            padding: "24px 18px 50px", width: "100%", maxWidth: 500,
-            maxHeight: "92vh", overflowY: "auto",
-            border: "1px solid rgba(255,255,255,0.1)",
-          }}>
-            <div style={{ color: "#fff", fontWeight: 800, fontSize: 18, marginBottom: 20 }}>
-              💧 नया Record
-            </div>
-
-            <div style={{ marginBottom: 14 }}>
-              <div style={lbl}>किसान का नाम *</div>
-              <input name="name" value={form.name} onChange={fc}
-                list="nl" placeholder="नाम लिखें या चुनें…"
-                style={{ ...inp, padding: "12px 14px", fontSize: 15 }} />
-              <datalist id="nl">
-                {people.map((p) => <option key={p.name} value={p.name} />)}
-              </datalist>
-            </div>
-
-            <div style={{ marginBottom: 18 }}>
-              <div style={lbl}>तारीख *</div>
-              <input name="date" type="date" value={form.date} onChange={fc}
-                style={{ ...inp, padding: "12px 14px", fontSize: 15 }} />
-            </div>
-
-            <div style={{
-              background: "rgba(255,255,255,0.04)", borderRadius: 16,
-              border: "1px solid rgba(255,255,255,0.1)", padding: "16px 14px", marginBottom: 14,
-            }}>
-              <div style={{ color: "#7dd3fc", fontWeight: 700, fontSize: 14, marginBottom: 14 }}>
-                ⏱ पंप कितना चला?
-              </div>
-
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ ...lbl, marginBottom: 8 }}>घंटे (Hours)</div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {[1, 2, 3, 4, 5, 6, 8, 10, 12].map((h) => (
-                    <button key={h} type="button" onClick={() => setForm((f) => ({ ...f, hrs: String(h) }))}
-                      style={{
-                        width: 52, height: 44, borderRadius: 10, border: "none",
-                        cursor: "pointer", fontFamily: "inherit", fontSize: 16, fontWeight: 700,
-                        background: String(form.hrs) === String(h)
-                          ? "linear-gradient(135deg,#38bdf8,#0ea5e9)"
-                          : "rgba(255,255,255,0.08)",
-                        color: String(form.hrs) === String(h) ? "#fff" : "#94a3b8",
-                      }}>{h}</button>
-                  ))}
-                  <input
-                    name="hrs" type="number" min="0" max="23"
-                    value={form.hrs} onChange={fc}
-                    placeholder="अन्य"
-                    style={{
-                      ...inp, width: 70, height: 44, padding: "0 10px",
-                      fontSize: 15, textAlign: "center",
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div style={{ ...lbl, marginBottom: 8 }}>मिनट (Minutes)</div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {[0, 15, 30, 45].map((m) => (
-                    <button key={m} type="button" onClick={() => setForm((f) => ({ ...f, mins: String(m) }))}
-                      style={{
-                        flex: 1, height: 46, borderRadius: 10, border: "none",
-                        cursor: "pointer", fontFamily: "inherit", fontSize: 15, fontWeight: 700,
-                        background: String(form.mins) === String(m)
-                          ? "linear-gradient(135deg,#38bdf8,#0ea5e9)"
-                          : "rgba(255,255,255,0.08)",
-                        color: String(form.mins) === String(m) ? "#fff" : "#94a3b8",
-                      }}>{m}</button>
-                  ))}
-                </div>
-              </div>
-
-              {pvValid && (
-                <div style={{
-                  marginTop: 14, display: "flex", justifyContent: "space-between", alignItems: "center",
-                  background: "rgba(56,189,248,0.1)", borderRadius: 12, padding: "12px 14px",
-                  border: "1px solid rgba(56,189,248,0.2)",
-                }}>
-                  <div>
-                    <div style={{ color: "#7dd3fc", fontSize: 11 }}>कुल समय</div>
-                    <div style={{ color: "#fff", fontWeight: 700, fontSize: 17 }}>
-                      {fmtDuration(form.hrs, form.mins)}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: "right", marginLeft: "auto" }}>
-                    <div style={{ color: "#7dd3fc", fontSize: 11 }}>रकम</div>
-                    <div style={{ color: "#38bdf8", fontWeight: 900, fontSize: 26 }}>
-                      ₹{pvAmt.toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div style={{ marginBottom: 14 }}>
-              <div style={lbl}>Rate (₹/ghanta)</div>
-              <input name="rate" type="number" value={form.rate} onChange={fc}
-                style={{ ...inp, padding: "12px 14px", fontSize: 15 }} />
-            </div>
-
-            <div style={{ marginBottom: 20 }}>
-              <div style={lbl}>Note (optional)</div>
-              <input name="note" type="text" value={form.note} onChange={fc}
-                placeholder="कुछ लिखना हो तो…"
-                style={{ ...inp, padding: "12px 14px", fontSize: 15 }} />
-            </div>
-
-            <div style={{ display: "flex", gap: 10 }}>
-              <button type="button"
-                onClick={() => { setShowAdd(false); setForm({ ...emptyForm, name: selName || "" }); }}
-                style={{
-                  flex: 1, padding: 14, borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)",
-                  background: "transparent", color: "#94a3b8", fontFamily: "inherit", fontSize: 14, cursor: "pointer",
-                }}>रद्द</button>
-              <button type="button" onClick={saveEntry} style={{
-                flex: 2, padding: 14, borderRadius: 12, border: "none",
-                background: pvValid && form.name.trim()
-                  ? "linear-gradient(135deg,#38bdf8,#0ea5e9)"
-                  : "rgba(255,255,255,0.1)",
-                color: pvValid && form.name.trim() ? "#fff" : "#64748b",
-                fontFamily: "inherit", fontSize: 15, fontWeight: 700, cursor: "pointer",
-              }}>✅ Save करें</button>
-            </div>
-          </div>
-        </div>
-      );
-
-      const DelModal = () => (
-        <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)",
-          backdropFilter: "blur(8px)", zIndex: 50,
-          display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
-        }}>
-          <div style={{
-            background: "#162030", borderRadius: 20, padding: 24,
-            border: "1px solid rgba(239,68,68,0.3)", maxWidth: 300, width: "100%", textAlign: "center",
-          }}>
-            <div style={{ fontSize: 38 }}>🗑️</div>
-            <div style={{ color: "#fff", fontWeight: 700, fontSize: 16, marginTop: 10 }}>Record हटाएं?</div>
-            <div style={{ color: "#94a3b8", fontSize: 13, marginTop: 5 }}>यह हमेशा के लिए हट जाएगा।</div>
-            <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
-              <button type="button" onClick={() => setDeleteId(null)} style={{
-                flex: 1, padding: 12, borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)",
-                background: "transparent", color: "#94a3b8", fontFamily: "inherit", cursor: "pointer",
-              }}>रहने दो</button>
-              <button type="button" onClick={() => delEntry(deleteId)} style={{
-                flex: 1, padding: 12, borderRadius: 10, border: "none",
-                background: "#ef4444", color: "#fff", fontFamily: "inherit", fontWeight: 700, cursor: "pointer",
-              }}>हाँ, हटाओ</button>
-            </div>
-          </div>
-        </div>
-      );
 
       const Card = ({ e }) => (
         <div style={{
@@ -437,12 +439,10 @@
         </div>
       );
 
-      // डेटा रेंडरिंग और व्यूज़
       const khataSummary = selName ? summary(selName) : { total: 0, paid: 0, due: 0, count: 0, totalDuration: "-" };
 
       return (
         <div>
-          {/* 📄 मुख्य ऐप स्क्रीन (जो मोबाइल पर दिखेगी) */}
           <div className="no-print">
             {view === "khata" && selName ? (
               <div style={pageStyle}>
@@ -463,7 +463,6 @@
                       <div style={{ color: "#64748b", fontSize: 11 }}>{khataSummary.count} entries</div>
                     </div>
                     
-                    {/* 🖨️ प्रिंट बटन */}
                     <button type="button" onClick={triggerPrint} style={{
                       marginLeft: "auto", background: "#334155", border: "none", borderRadius: 10,
                       color: "#fff", fontSize: 13, fontWeight: 'bold', cursor: "pointer", padding: "8px 14px",
@@ -500,9 +499,6 @@
                   )}
                   {khataShow.map((e) => <Card key={e.id} e={e} />)}
                 </div>
-
-                {showAdd && <AddModal />}
-                {deleteId && <DelModal />}
               </div>
             ) : (
               <div style={pageStyle}>
@@ -582,14 +578,11 @@
                   boxShadow: "0 8px 28px rgba(56,189,248,0.45)",
                   display: "flex", alignItems: "center", justifyContent: "center", zIndex: 20,
                 }}>+</button>
-
-                {showAdd && <AddModal />}
-                {deleteId && <DelModal />}
               </div>
             )}
           </div>
 
-          {/* 🖨️ छिपी हुई प्रिंट शीट (केवल प्रिंटर/PDF बनाते समय दिखेगी) */}
+          {/* 🖨️ छिपी हुई प्रिंट शीट */}
           {selName && (
             <div className="print-page">
               <h2 style={{ textAlign: "center", marginBottom: "5px" }}>💧 पंप किराया खाता रिपोर्ट</h2>
@@ -641,6 +634,29 @@
                 हस्ताक्षर / हिसाब कर्ता की सील
               </div>
             </div>
+          )}
+
+          {/* ── MODALS RENDER ── */}
+          {showAdd && (
+            <AddModal 
+              form={form} 
+              fc={fc} 
+              people={people} 
+              setForm={setForm} 
+              pvValid={pvValid} 
+              pvAmt={pvAmt} 
+              emptyForm={emptyForm} 
+              selName={selName} 
+              setShowAdd={setShowAdd} 
+              saveEntry={saveEntry} 
+            />
+          )}
+          {deleteId && (
+            <DelModal 
+              setDeleteId={setDeleteId} 
+              delEntry={delEntry} 
+              deleteId={deleteId} 
+            />
           )}
         </div>
       );
